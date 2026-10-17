@@ -17,3 +17,6 @@
 
 # Логи
 *.log
+
+# Кэш CS Fixer
+.php-cs-fixer.cache
