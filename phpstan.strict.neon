@@ -1,0 +1,48 @@
+# Строгий профиль PHPStan для бэкенда (задача 5.31).
+#
+# Зачем два профиля. `phpstan.dist.neon` уже используется CI-джобой Backend
+# (`vendor/bin/phpstan analyse` — автодискавери), поэтому подключение строгих
+# правил в него покрасило бы CI и все последующие PR до приведения кода
+# (блокер, найденный на ревью 5.31). Разделение согласовано там же:
+#   * phpstan.dist.neon   — профиль CI: как было до 5.31 (symfony + ignoreErrors);
+#   * phpstan.strict.neon — строгий профиль для локального прогона (этот файл).
+# В 5.34 CI-шаг переключается на этот профиль одной строкой (`-c phpstan.strict.neon`)
+# вместе с единоразовым приведением кода к канону.
+#
+# Использование (в контейнере php, из каталога api/):
+#   php bin/console cache:warmup --env=dev
+#   vendor/bin/phpstan analyse -c phpstan.strict.neon --no-progress --memory-limit=1G
+#   composer phpstan   # то же самое
+
+includes:
+    # База: level max, paths (src, tests), containerXmlPath, ignoreErrors по $id.
+    - phpstan.dist.neon
+    # Строгие правила: неявные bool/сравнения, dynamic static call и прочее.
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+    # Устаревшие API Symfony/PHP — вход для 5.34.
+    - vendor/phpstan/phpstan-deprecation-rules/rules.neon
+    # DQL и маппинг Doctrine (нужен живой EntityManager, см. ниже).
+    - vendor/phpstan/phpstan-doctrine/extension.neon
+    - vendor/phpstan/phpstan-doctrine/rules.neon
+    # Тесты: phpunit-специфика (data providers, моки и т.п.).
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+    - vendor/phpstan/phpstan-phpunit/rules.neon
+    # «Мёртвый код» — замена abandoned `tomasvotruba/unused-public` →
+    # `shipmonk/dead-code-detector` (решение РП 09.10.26). Детектирует мёртвые
+    # методы/константы/свойства/enum-cases; понимает Symfony (DIC-вызовы через
+    # containerXmlPath, атрибуты #[AsCommand]/#[Route]/#[AsEventListener]…),
+    # Doctrine и PHPUnit (test-методы, data providers).
+    # Параметры — по умолчанию («как есть»), без ignoreErrors на старте.
+    - vendor/shipmonk/dead-code-detector/rules.neon
+
+parameters:
+    # Маппинг и DQL: phpstan-doctrine нужен «живой» EntityManager.
+    # Файл требует .env и рабочую БД (локально — из контейнера php; в CI БД и
+    # миграции в Backend-джобе уже есть).
+    doctrine:
+        objectManagerLoader: tests/object-manager.php
+
+    excludePaths:
+        analyse:
+            # Инфраструктурный загрузчик EntityManager: анализировать его не нужно.
+            - tests/object-manager.php

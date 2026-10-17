@@ -1,0 +1,19 @@
+# Локальные секреты и окружение
+.env
+.env.local
+.env.*.local
+*.local
+
+# Symfony / PHP
+/vendor/
+/var/
+/.phpunit.cache/
+/.phpunit.result.cache
+
+# IDE/OS
+.idea/
+.vscode/
+.DS_Store
+
+# Логи
+*.log
