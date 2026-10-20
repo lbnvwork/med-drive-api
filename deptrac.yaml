@@ -1,0 +1,18 @@
+# Границы слоёв. Пока каркас: Controller может знать про домен, домен — ни про что из UI.
+# По мере появления контекстов добавляй слои и правила (образец — ibs: Context_<Name>).
+deptrac:
+    paths:
+        - ./src
+    layers:
+        - name: Controller
+          collectors:
+              - type: classNameRegex
+                value: '#^App\\Controller\\#'
+        - name: Domain
+          collectors:
+              - type: classNameRegex
+                value: '#^App\\(?!Controller\\)#'
+    ruleset:
+        Controller:
+            - Domain
+        Domain: ~

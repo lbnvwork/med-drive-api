@@ -37,7 +37,7 @@ jobs:
         with:
           php-version: '8.3'
           extensions: pdo_pgsql, mbstring, intl, pcntl, bcmath, gd, exif, zip
-          coverage: none
+          coverage: pcov
           tools: composer:v2
 
       - name: Composer validate
@@ -61,13 +61,14 @@ jobs:
       - name: PHPUnit
         env:
           APP_ENV: test
-        run: vendor/bin/phpunit
+        run: vendor/bin/phpunit --coverage-text
 
       - name: PHPStan
         run: vendor/bin/phpstan analyse --no-progress
 
+      - name: Deptrac (границы слоёв)
+        run: vendor/bin/deptrac analyse --no-progress
+
       - name: PHP CS Fixer (dry-run)
         run: vendor/bin/php-cs-fixer fix --dry-run --diff
 
-      - name: Composer unused
-        run: vendor/bin/composer-unused
